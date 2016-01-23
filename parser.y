@@ -60,7 +60,7 @@
         declarations
         subprogram_declarations
         compound_statement
-        '.'
+        '.' { generateExit(); }
     	;
     identifier_program_list: 
         ID { removeSymbol($1); }
@@ -116,7 +116,7 @@
         | statement_list ';' statement
         ;
     statement: 
-        variable ASSIGNMENT_OPERATOR expression
+        variable ASSIGNMENT_OPERATOR expression { $$ = createExpression(ASSIGNMENT_OPERATOR, $1, $3); }
         | procedure_statement
         | compound_statement
         | IF expression THEN statement ELSE statement
@@ -128,7 +128,7 @@
         ;
     procedure_statement:
         ID { $$ = $1; }
-        | ID '(' expression_list ')'
+        | ID '(' expression_list ')' { generateProcedure($1, $3) }
         ;
     expression_list:
         expression { $$ = $1; }
@@ -146,7 +146,7 @@
     simple_expression:
         term { $$ = $1; }
         | sign term
-        | simple_expression sign term { createExpression($2, $1, $3); }
+        | simple_expression sign term { $$ = createExpression($2, $1, $3); }
         | simple_expression OR term
         ;
     term:
