@@ -1,8 +1,10 @@
 #include "global.h"
 
-int programOffset = 0;
+int offset = 0;
+int localOffset = 0;
 int currentScope = SCOPE_GLOBAL;
 int labelCounter = 0;
+int temporaryVariableCounter = 0;
 vector<SymbolTableEntry> symbolTable;
 vector<int> untypedTokens;
 
@@ -16,7 +18,7 @@ int addSymbol(string name)
 {
 	SymbolTableEntry entry;
 	entry.name = name;
-	entry.scope = SCOPE_GLOBAL;
+	entry.scope = currentScope;
 	entry.type = NONE;
 	entry.offset = -1;
 	symbolTable.push_back(entry);
@@ -38,6 +40,22 @@ void updateSymbolWithType(int id, int type)
 	symbolTable.at(id).offset = calculateOffset(type);
 }
 
+SymbolTableEntry getSymbol(int id)
+{
+	return symbolTable.at(id);
+}
+
+int getSymbolId(string name)
+{
+	for (int i = 0; i < symbolTable.size(); i++) {
+		if (0 == name.compare(symbolTable.at(i).name)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 void removeSymbol(int id)
 {
 	if (symbolTable.size() > id) {
@@ -51,12 +69,12 @@ int calculateOffset(int type)
 
 	switch (type) {
 		case INTEGER:
-			returnOffset = programOffset;
-			programOffset += 4;
+			returnOffset = offset;
+			offset += 4;
 			break;
 		case REAL:
-			returnOffset = programOffset;
-			programOffset += 8;
+			returnOffset = offset;
+			offset += 8;
 			break;
 	}
 
@@ -77,9 +95,19 @@ void updateUntypedTokens(int type)
 	}
 }
 
-string convertIntToString(int number) {
+string convertIntToString(int number)
+{
 	string result;
 	sprintf((char*) result.c_str(), "%d", number);
 	
 	return result.c_str();
+}
+
+void changeScope(int scope)
+{
+	if (SCOPE_LOCAL == currentScope && SCOPE_GLOBAL == scope) {
+		localOffset = 0;
+	}
+
+	currentScope = scope;
 }

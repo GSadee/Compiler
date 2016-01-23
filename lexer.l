@@ -70,8 +70,10 @@ id 			{letter}({letter}|{digit})*
 {id}			{ 
 					if (enableUpdatingSymbolTable) { 
 						yylval = addSymbol(yytext);
+					} else {
+						yylval = getSymbolId(yytext);
 					}
-					return ID; 
+					return ID;
 				}
 .				{ return yytext[0]; }
 <<EOF>>			{ return DONE; }

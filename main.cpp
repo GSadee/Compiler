@@ -1,5 +1,6 @@
 #include "global.h"
 #include "printer.h"
+#include "codeGenerator.h"
 
 using namespace std;
 
@@ -16,11 +17,13 @@ int main(int argc, char const *argv[])
 	yyin = fopen(argv[1], "rt+");
 	
 	initSymbolTable();
+	initCodeGenerator();
 	yyparse();
 	
 	fclose(yyin);
 
 	printSymbols();
+	printOutput();
 
 	return 1;
 }

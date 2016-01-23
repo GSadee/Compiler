@@ -1,9 +1,9 @@
 CPP = g++
 FLEX = flex
 BISON = bison
-HEADERS = global.h symbolTableManager.h printer.h lexer.h parser.h
-SOURCES = main.cpp symbolTableManager.cpp printer.cpp lexer.c parser.c
-OBJECTS = main.o symbolTableManager.o printer.o lexer.o parser.o
+HEADERS = global.h symbolTableManager.h printer.h codeGenerator.h lexer.h parser.h
+SOURCES = main.cpp symbolTableManager.cpp printer.cpp codeGenerator.cpp lexer.c parser.c
+OBJECTS = main.o symbolTableManager.o printer.o codeGenerator.o lexer.o parser.o
 LEXER = lexer.c lexer.h
 PARSER = parser.c parser.h
 CFLAGS = -c -pedantic -g
