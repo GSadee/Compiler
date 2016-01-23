@@ -3,6 +3,8 @@
 
 string output;
 
+vector<int> whileLabels;
+
 void initCodeGenerator()
 {
 	createJump("lab0");
@@ -36,11 +38,13 @@ int createExpression(int operationType, int firstOperandId, int secondOperandId)
 		case AND:
 			return generateExpression("and", firstOperandId, secondOperandId);
 		case OR:
+			cout << endl << "OR: " << firstOperandId << " " << secondOperandId << endl;
 			return generateExpression("or", firstOperandId, secondOperandId);
 		case ASSIGNMENT_OPERATOR:
 			return generateAssignmentOperation(firstOperandId, secondOperandId);
 		case EQUAL:
-			return generateLogicalExpression("je", firstOperandId, secondOperandId);
+			generateLogicalExpression("je", firstOperandId, secondOperandId);
+			return 10;
 		case NOT_EQUAL:
 			return generateLogicalExpression("jne", firstOperandId, secondOperandId);
 		case GREATER:
@@ -68,7 +72,7 @@ int generateLogicalExpression(string operation, int firstOperandId, int secondOp
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
 
 	int temporaryId = createTemporaryVariableEntry(firstOperand.type);
-	int number0Id = createNumberEntry(0);
+	int number0Id = createNumberEntry(0, INTEGER_VALUE);
 
 	generateAssignmentOperation(temporaryId, number0Id);
 
@@ -78,7 +82,7 @@ int generateLogicalExpression(string operation, int firstOperandId, int secondOp
 
 	generateLabel(labelId);
 
-	int number1Id = createNumberEntry(1);
+	int number1Id = createNumberEntry(1, INTEGER_VALUE);
 
 	generateAssignmentOperation(temporaryId, number1Id);
 
@@ -94,17 +98,18 @@ int createTemporaryVariableEntry(int type)
 	return addSymbolWithType(name, type);
 }
 
-int createNumberEntry(int number)
+int createNumberEntry(int number, int type)
 {
 	string name = convertIntToString(number);
 	
-	return addSymbolWithType(name, INTEGER_VALUE);	
+	return addSymbolWithType(name, type);	
 }
 
 void generateConditionalValueJump(string operation, int operandId, int number)
 {
+	cout << operandId << endl;
 	int labelId = createLabel();
-	int numberId = createNumberEntry(number);
+	int numberId = createNumberEntry(number, INTEGER_VALUE);
 
 	generateConditionalJump(operation, operandId, numberId, labelId);
 }
@@ -226,6 +231,21 @@ void generateLastLabel()
 void generatePreviousLabel()
 {
 	output += "lab" + convertIntToString(labelCounter - 2) + ":\n";
+}
+
+void addWhileLabel()
+{
+	whileLabels.push_back(getSymbolId("lab" + convertIntToString(labelCounter - 1)));
+}
+
+string getWhileLabel()
+{
+	int labelId = whileLabels.back();
+	SymbolTableEntry labelEntry = getSymbol(labelId);
+	string label = labelEntry.name;
+	whileLabels.pop_back();
+
+	return label;
 }
 
 void printOutput()

@@ -127,11 +127,14 @@
                 createJump(label.name);
                 generatePreviousLabel();
             }
-            ELSE statement 
-            {
-                generateLastLabel();
+            ELSE statement { generateLastLabel(); }
+        | WHILE { addWhileLabel(); }
+            expression { generateConditionalValueJump("je", $3, 0); }
+            DO statement 
+            { 
+                createJump(getWhileLabel());
+                generateLastLabel(); 
             }
-        | WHILE expression DO statement
         ;
     variable: 
         ID { $$ = $1; }
@@ -170,18 +173,14 @@
     factor:
         variable { $$ = $1; }
         | ID '(' expression_list ')' { $$ = $2; }
-        | INTEGER_VALUE
-        {
-            int id = addSymbolWithType(convertIntToString($1), INTEGER_VALUE);
-            $$ = id;
-        }
-        | REAL_VALUE
-        {
-            int id = addSymbolWithType(convertRealToString($1), REAL_VALUE);
-            $$ = id;
-        }
+        | INTEGER_VALUE { $$ = $1; }
+        | REAL_VALUE { $$ = $1; }
         | '(' expression ')' { $$ = $2; }
-        | NOT factor { $$ = $2; }
+        | NOT factor 
+        {
+            int numberId = createNumberEntry(0, INTEGER_VALUE);
+            $$ = generateLogicalExpression("je", $2, numberId);
+        }
         ;
     sign: 
         PLUS { $$ = PLUS; }

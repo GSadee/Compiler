@@ -26,8 +26,14 @@ void generateLabel(int labelId);
 void printOutput();
 
 int createTemporaryVariableEntry(int type);
-int createNumberEntry(int number);
+
+int createNumberEntry(int number, int type);
+int createIntegerNumberEntry(int number);
+int createRealNumberEntry(double number);
 
 string getOffset(SymbolTableEntry entry);
 void generateLastLabel();
 void generatePreviousLabel();
+
+void addWhileLabel();
+string getWhileLabel();
