@@ -8,11 +8,17 @@ void initCodeGenerator()
 	createJump("lab0");
 }
 
-void createLabel()
+int createLabel()
 {
 	string label = "lab" + convertIntToString(labelCounter++);
-    addSymbolWithType(label, LABEL);
-	output += label + ":\n";
+    
+    return addSymbolWithType(label, LABEL);
+}
+
+void generateLabel(int labelId)
+{
+	SymbolTableEntry label = getSymbol(labelId);
+	output += label.name + ":\n";
 }
 
 void createJump(string label)
@@ -27,8 +33,24 @@ int createExpression(int operationType, int firstOperandId, int secondOperandId)
 			return generateExpression("add", firstOperandId, secondOperandId);
 		case MULTIPLICATION:
 			return generateExpression("mul", firstOperandId, secondOperandId);
+		case AND:
+			return generateExpression("and", firstOperandId, secondOperandId);
+		case OR:
+			return generateExpression("or", firstOperandId, secondOperandId);
 		case ASSIGNMENT_OPERATOR:
 			return generateAssignmentOperation(firstOperandId, secondOperandId);
+		case EQUAL:
+			return generateLogicalExpression("je", firstOperandId, secondOperandId);
+		case NOT_EQUAL:
+			return generateLogicalExpression("jne", firstOperandId, secondOperandId);
+		case GREATER:
+			return generateLogicalExpression("jg", firstOperandId, secondOperandId);
+		case LOWER:
+			return generateLogicalExpression("jl", firstOperandId, secondOperandId);
+		case GREATER_EQUAL:
+			return generateLogicalExpression("jge", firstOperandId, secondOperandId);
+		case LOWER_EQUAL:
+			return generateLogicalExpression("jle", firstOperandId, secondOperandId);
 		default:
 			break;
 	}
@@ -36,23 +58,89 @@ int createExpression(int operationType, int firstOperandId, int secondOperandId)
 	return -1;
 }
 
-int generateExpression(string operation, int & firstOperandId, int & secondOperandId)
+int generateLogicalExpression(string operation, int firstOperandId, int secondOperandId)
+{
+	typeConversion(firstOperandId, secondOperandId);
+
+	int labelId = createLabel();
+	generateConditionalJump(operation, firstOperandId, secondOperandId, labelId);
+
+	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
+
+	int temporaryId = createTemporaryVariableEntry(firstOperand.type);
+	int number0Id = createNumberEntry(0);
+
+	generateAssignmentOperation(temporaryId, number0Id);
+
+	int nextLabelId = createLabel();
+	SymbolTableEntry nextLabel = getSymbol(nextLabelId);
+	createJump(nextLabel.name);
+
+	generateLabel(labelId);
+
+	int number1Id = createNumberEntry(1);
+
+	generateAssignmentOperation(temporaryId, number1Id);
+
+	generateLabel(nextLabelId);
+
+	return temporaryId;
+}
+
+int createTemporaryVariableEntry(int type)
+{
+	string name = "$t" + convertIntToString(temporaryVariableCounter++);
+	
+	return addSymbolWithType(name, type);
+}
+
+int createNumberEntry(int number)
+{
+	string name = convertIntToString(number);
+	
+	return addSymbolWithType(name, INTEGER_VALUE);	
+}
+
+void generateConditionalValueJump(string operation, int operandId, int number)
+{
+	int labelId = createLabel();
+	int numberId = createNumberEntry(number);
+
+	generateConditionalJump(operation, operandId, numberId, labelId);
+}
+
+void generateConditionalJump(string operation, int firstOperandId, int secondOperandId, int labelId)
+{
+	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
+	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
+	SymbolTableEntry label = getSymbol(labelId);
+
+	output += "\t"
+		+ operation + getSuffix(firstOperand.type) + "\t" 
+		+ getOffset(firstOperand) 
+		+ ", " 
+		+ getOffset(secondOperand)
+		+ ", #" 
+		+ label.name
+		+ "\n";
+}
+
+int generateExpression(string operation, int firstOperandId, int secondOperandId)
 {
 	typeConversion(firstOperandId, secondOperandId);
 
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
 	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
 
-	string name = "$t" + convertIntToString(temporaryVariableCounter++);
-	int temporaryId = addSymbolWithType(name, firstOperand.type);
+	int temporaryId = createTemporaryVariableEntry(firstOperand.type);
 	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 
 	output += "\t" + operation + getSuffix(temporaryEntry.type) + "\t" 
-		+ convertIntToString(firstOperand.offset) 
+		+ getOffset(firstOperand) 
 		+ ", " 
-		+ convertIntToString(secondOperand.offset)
+		+ getOffset(secondOperand)
 		+ ", " 
-		+ convertIntToString(temporaryEntry.offset)
+		+ getOffset(temporaryEntry)
 		+ "\n";
 
 	return temporaryId;
@@ -76,13 +164,12 @@ void generateIntToReal(int & id)
 {
 	SymbolTableEntry entry = getSymbol(id);
 
-	string name = "$t" + convertIntToString(temporaryVariableCounter++);
-	int temporaryId = addSymbolWithType(name, REAL);
+	int temporaryId = createTemporaryVariableEntry(REAL);
 	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 	output += "\tinttoreal.i\t" 
-		+ convertIntToString(entry.offset) 
+		+ getOffset(entry) 
 		+ ", " 
-		+ convertIntToString(temporaryEntry.offset) 
+		+ getOffset(temporaryEntry) 
 		+ "\n";
 	id = temporaryId;
 }
@@ -108,9 +195,9 @@ int generateAssignmentOperation(int firstOperandId, int secondOperandId)
 	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
 
 	output += "\tmov" + getSuffix(firstOperand.type) + "\t" 
-		+ convertIntToString(secondOperand.offset) 
+		+ getOffset(secondOperand)
 		+ ", " 
-		+ convertIntToString(firstOperand.offset)
+		+ getOffset(firstOperand)
 		+ "\n";
 
 	return -1;
@@ -127,8 +214,18 @@ void generateProcedure(int procedureId, int argumentId)
 	SymbolTableEntry argument = getSymbol(argumentId);
 
 	output += "\t" + procedure.name + getSuffix(argument.type)
-		+ "\t" + convertIntToString(argument.offset) 
+		+ "\t" + getOffset(argument) 
 		+ "\n";
+}
+
+void generateLastLabel()
+{
+	output += "lab" + convertIntToString(labelCounter - 1) + ":\n";
+}
+
+void generatePreviousLabel()
+{
+	output += "lab" + convertIntToString(labelCounter - 2) + ":\n";
 }
 
 void printOutput()

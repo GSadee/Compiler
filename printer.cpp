@@ -20,6 +20,12 @@ void printSymbols()
 			case REAL:
 				cout << "variable " << entry.name << " real ";
 				break;
+			case INTEGER_VALUE:
+				cout << "number " << entry.name << " integer ";
+				break;
+			case REAL_VALUE:
+				cout << "number " << entry.name << " real ";
+				break;
 			case PROCEDURE:
 				cout << "procedure " << entry.name << " ";
 				break;

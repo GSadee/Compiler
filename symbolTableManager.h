@@ -36,4 +36,5 @@ void addUntypedToken(int token);
 void updateUntypedTokens(int type);
 
 string convertIntToString(int number);
+string convertRealToString(double number);
 void changeScope(int scope);
