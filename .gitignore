@@ -1,3 +1,9 @@
+compiler
+lexer.c
+lexer.h
+parser.c
+parser.h
+
 # Compiled Object files
 *.slo
 *.lo
