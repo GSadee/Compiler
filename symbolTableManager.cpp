@@ -2,12 +2,19 @@
 
 int programOffset = 0;
 int currentScope = SCOPE_GLOBAL;
-vector<SymbolEntry> symbolTable;
+int labelCounter = 0;
+vector<SymbolTableEntry> symbolTable;
 vector<int> untypedTokens;
+
+void initSymbolTable()
+{
+	addSymbolWithType("write", PROCEDURE);
+	addSymbolWithType("read", PROCEDURE);
+}
 
 int addSymbol(string name) 
 {
-	SymbolEntry entry;
+	SymbolTableEntry entry;
 	entry.name = name;
 	entry.scope = SCOPE_GLOBAL;
 	entry.type = NONE;
@@ -17,58 +24,43 @@ int addSymbol(string name)
 	return symbolTable.size() - 1;
 }
 
-void updateSymbol(int id, int type)
+int addSymbolWithType(string name, int type) 
+{
+	int id = addSymbol(name);
+	updateSymbolWithType(id, type);
+
+	return id;
+}
+
+void updateSymbolWithType(int id, int type)
 {
 	symbolTable.at(id).type = type;
 	symbolTable.at(id).offset = calculateOffset(type);
 }
 
-int calculateOffset(int type)
+void removeSymbol(int id)
 {
-	int returnValue;
-
-	if (INTEGER == type) {
-		returnValue = programOffset;
-		programOffset += 4;
-
-		return returnValue;
-	}
-	if (REAL == type)
-	{
-		returnValue = programOffset;
-		programOffset += 8;
-
-		return returnValue;
+	if (symbolTable.size() > id) {
+		symbolTable.erase(symbolTable.begin() + id);
 	}
 }
 
-void printSymbols()
+int calculateOffset(int type)
 {
-	cout << "; " << "Symbol table dump" << endl;
-	for (int iterator = 0; iterator < symbolTable.size(); iterator++)
-	{
-		SymbolEntry entry = symbolTable[iterator];
-		if (SCOPE_GLOBAL == entry.scope) {
-			cout << "; " << "Global ";
-		} else {
-			cout << "; " << "Local ";
-		}
-		cout << entry.name<<" ";
-		switch (entry.type) {
-			case INTEGER:
-				cout << "integer ";
-				break;
-			case REAL:
-				cout << "real ";
-				break;
-			default:
-				break;
-		}
-		if (-1 < entry.offset) {
-			cout << "offset=" << entry.offset;
-		}
-		cout << endl;
+	int returnOffset = -1;
+
+	switch (type) {
+		case INTEGER:
+			returnOffset = programOffset;
+			programOffset += 4;
+			break;
+		case REAL:
+			returnOffset = programOffset;
+			programOffset += 8;
+			break;
 	}
+
+	return returnOffset;
 }
 
 void addUntypedToken(int token) 
@@ -80,7 +72,14 @@ void updateUntypedTokens(int type)
 {
 	while(0 < untypedTokens.size())
 	{
-		updateSymbol(untypedTokens.front(), type);
+		updateSymbolWithType(untypedTokens.front(), type);
 		untypedTokens.erase(untypedTokens.begin());
 	}
+}
+
+string convertIntToString(int number) {
+	string result;
+	sprintf((char*) result.c_str(), "%d", number);
+	
+	return result.c_str();
 }

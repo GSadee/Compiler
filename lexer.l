@@ -6,7 +6,7 @@
 
 	int lineno = 0;
 
-	bool updateSymbolTable = true;
+	bool enableUpdatingSymbolTable = true;
 %}
 
 blank		[ \t\r]
@@ -22,7 +22,7 @@ id 			{letter}({letter}|{digit})*
 {whitespaces}
 {newline}		{ ++lineno; }
 {integer}		{ 
-					yylval = atoi(yytext); 
+					yylval = atoi(yytext);
 					return INTEGER_VALUE;
 				}
 {real}			{ 
@@ -34,11 +34,11 @@ id 			{letter}({letter}|{digit})*
 "integer"		{ return INTEGER; }
 "real"			{ return REAL; }
 "begin"			{ 
-					updateSymbolTable = false; 
+					enableUpdatingSymbolTable = false; 
 					return START; 
 				}
 "end"			{ 
-					updateSymbolTable = true; 
+					enableUpdatingSymbolTable = true; 
 					return END; 
 				}
 ":="			{ return ASSIGNMENT_OPERATOR; }
@@ -68,8 +68,8 @@ id 			{letter}({letter}|{digit})*
 "+"				{ return PLUS; }
 "-"				{ return MINUS; }
 {id}			{ 
-					if (updateSymbolTable) { 
-						yylval = addSymbol(yytext); 
+					if (enableUpdatingSymbolTable) { 
+						yylval = addSymbol(yytext);
 					}
 					return ID; 
 				}

@@ -11,6 +11,7 @@
 %error-verbose
 
 %token PROGRAM
+%token PROGRAM_ID
 %token ID
 %token INTEGER
 %token INTEGER_VALUE
@@ -45,22 +46,27 @@
 %token PLUS
 %token MINUS
 %token NONE
+%token LABEL
 %token DONE 0
 
 %%
     program: 
-        PROGRAM ID '(' identifier_program_list ')' ';'
+        PROGRAM ID '(' identifier_program_list ')' ';' 
+        { 
+            removeSymbol($2); 
+            addSymbolWithType("lab" + convertIntToString(labelCounter++), LABEL); 
+        }
         declarations
         subprogram_declarations
         compound_statement
         '.'
     	;
     identifier_program_list: 
-        ID
-        | identifier_program_list ',' ID 
+        ID { removeSymbol($1); }
+        | identifier_program_list ',' ID { removeSymbol($3); }
         ;
     declarations: 
-        declarations VAR identifier_list':' type';' {
+        declarations VAR identifier_list ':' type ';' {
             updateUntypedTokens($5);
         }
         |
