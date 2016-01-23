@@ -25,6 +25,8 @@ int createExpression(int operationType, int firstOperandId, int secondOperandId)
 	switch (operationType) {
 		case PLUS:
 			return generateExpression("add", firstOperandId, secondOperandId);
+		case MULTIPLICATION:
+			return generateExpression("mul", firstOperandId, secondOperandId);
 		case ASSIGNMENT_OPERATOR:
 			return generateAssignmentOperation(firstOperandId, secondOperandId);
 		default:
@@ -41,11 +43,11 @@ int generateExpression(string operation, int & firstOperandId, int & secondOpera
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
 	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
 
-	string name = "t" + convertIntToString(temporaryVariableCounter++);
+	string name = "$t" + convertIntToString(temporaryVariableCounter++);
 	int temporaryId = addSymbolWithType(name, firstOperand.type);
 	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 
-	output += "\tadd" + getSuffix(temporaryEntry.type) + "\t" 
+	output += "\t" + operation + getSuffix(temporaryEntry.type) + "\t" 
 		+ convertIntToString(firstOperand.offset) 
 		+ ", " 
 		+ convertIntToString(secondOperand.offset)
@@ -60,8 +62,6 @@ void typeConversion(int & firstOperandId, int & secondOperandId)
 {
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
 	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
-
-	cout << firstOperand.type << endl << secondOperand.type << endl;
 
 	if ((INTEGER == firstOperand.type || INTEGER_VALUE == firstOperand.type)
 		&& (REAL == secondOperand.type || REAL_VALUE == secondOperand.type)) {
@@ -102,8 +102,6 @@ string getSuffix(int type)
 
 int generateAssignmentOperation(int firstOperandId, int secondOperandId)
 {
-	cout << firstOperandId << endl << secondOperandId<<endl;
-
 	typeConversion(firstOperandId, secondOperandId);
 
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);

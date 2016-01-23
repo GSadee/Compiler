@@ -128,7 +128,7 @@
         ;
     procedure_statement:
         ID { $$ = $1; }
-        | ID '(' expression_list ')' { generateProcedure($1, $3) }
+        | ID '(' expression_list ')' { generateProcedure($1, $3); }
         ;
     expression_list:
         expression { $$ = $1; }
@@ -151,10 +151,10 @@
         ;
     term:
         factor { $$ = $1; }
-        | term MULTIPLICATION factor
-        | term DIVISION factor
-        | term MODULO factor
-        | term AND factor
+        | term MULTIPLICATION factor { $$ = createExpression(MULTIPLICATION, $1, $3); }
+        | term DIVISION factor { $$ = createExpression(DIVISION, $1, $3); }
+        | term MODULO factor { $$ = createExpression(MODULO, $1, $3); }
+        | term AND factor { $$ = createExpression(AND, $1, $3); }
         ;
     factor:
         variable { $$ = $1; }
@@ -172,7 +172,7 @@
 
 int yyerror(char const* s)
 {
-    printf("%s\n", s);
+    printf("%s at line %d\n", s, lineno);
 
     return 1;
 }
