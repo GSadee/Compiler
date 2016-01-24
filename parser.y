@@ -9,9 +9,7 @@
     int yyerror(char const* s);
     void generateProcedureByExpressionList(int procedureId);
 
-    int enableProcedureCall = false;
-
-    vector<int> argss;
+    vector<int> temporaryArguments;
 %}
 
 %error-verbose
@@ -150,20 +148,20 @@
         | ID '[' expression ']'
         ;
     procedure_statement:
-        ID 
-        {
-            enableProcedureCall = true;
-            $$ = $1; 
-        }
-        | ID '(' expression_list ')' { generateProcedureByExpressionList($1); argss.clear(); }
+        ID { $$ = $1; }
+        | ID '(' expression_list ')' { generateProcedureByExpressionList($1); }
         ;
     expression_list:
         expression 
         {
-            argss.push_back($1);
-            $$ = $1; }
-        | expression_list ',' expression { 
-            argss.push_back($3);$$ = $3; }
+            temporaryArguments.push_back($1);
+            $$ = $1; 
+        }
+        | expression_list ',' expression 
+        { 
+            temporaryArguments.push_back($3);
+            $$ = $3; 
+        }
         ;
     expression:
         simple_expression { $$ = $1; }
@@ -214,8 +212,8 @@ int yyerror(char const* s)
 
 void generateProcedureByExpressionList(int procedureId)
 {
-    while (0 < argss.size()) {
-        generateProcedure(procedureId, argss.front());
-        argss.erase(argss.begin());
+    while (0 < temporaryArguments.size()) {
+        generateProcedure(procedureId, temporaryArguments.front());
+        temporaryArguments.erase(temporaryArguments.begin());
     }
 }
