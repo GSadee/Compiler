@@ -223,7 +223,7 @@ void generateExit()
 	output += "\texit\n";
 }
 
-void generateProcedure(int procedureId, int argumentId)
+void generateProcedureCall(int procedureId, int argumentId)
 {
 	SymbolTableEntry procedure = getSymbol(procedureId);
 	SymbolTableEntry argument = getSymbol(argumentId);
@@ -261,4 +261,18 @@ string getWhileLabel()
 void printOutput()
 {
 	cout << endl << endl << output << endl;
+}
+
+void generateProcedure(int procedureId) 
+{
+	SymbolTableEntry procedure = getSymbol(procedureId);
+
+	output += procedure.name + ":\n\tenter.i\t#?\n";
+}
+
+void generateSubProgramLeave()
+{
+	output += "\tleave\n\treturn\n";
+
+	output.replace(output.find("?"), 1, convertIntToString(localOffset));
 }

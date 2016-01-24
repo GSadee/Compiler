@@ -2,6 +2,7 @@
 
 int offset = 0;
 int localOffset = 0;
+int referenceOffset = 8;
 int currentScope = SCOPE_GLOBAL;
 int labelCounter = 0;
 int temporaryVariableCounter = 0;
@@ -19,6 +20,7 @@ int addSymbol(string name)
 	SymbolTableEntry entry;
 	entry.name = name;
 	entry.scope = currentScope;
+	entry.reference = false;
 	entry.type = NONE;
 	entry.offset = -1;
 	symbolTable.push_back(entry);
@@ -72,17 +74,34 @@ void removeSymbol(int id)
 int calculateOffset(int type)
 {
 	int returnOffset = -1;
+	int variableOffset = -1;
 
 	switch (type) {
 		case INTEGER:
-			returnOffset = offset;
-			offset += 4;
+			variableOffset = 4;
 			break;
 		case REAL:
-			returnOffset = offset;
-			offset += 8;
+			variableOffset = 8;
 			break;
+		default:
+			return -1;
 	}
+
+	if (SCOPE_GLOBAL == currentScope) {
+		returnOffset = offset;
+		offset += variableOffset;
+	} else if (SCOPE_LOCAL == currentScope) {
+		localOffset += variableOffset;
+		returnOffset = localOffset;
+	}
+
+	return returnOffset;
+}
+
+int calculateReferenceOffset()
+{
+	int returnOffset = referenceOffset;
+	referenceOffset += 4;
 
 	return returnOffset;
 }
@@ -120,6 +139,7 @@ void changeScope(int scope)
 {
 	if (SCOPE_LOCAL == currentScope && SCOPE_GLOBAL == scope) {
 		localOffset = 0;
+		referenceOffset = 8;
 	}
 
 	currentScope = scope;
@@ -129,6 +149,14 @@ string getOffset(SymbolTableEntry entry)
 {
 	if (0 > entry.offset && (INTEGER_VALUE == entry.type || REAL_VALUE == entry.type)) {
 		return "#" + entry.name;
+	}
+
+	if (true == entry.reference) {
+		return "*BP+" + convertIntToString(entry.offset);
+	}
+
+	if (SCOPE_LOCAL == entry.scope) {
+		return "BP-" + convertIntToString(entry.offset);
 	}
 
 	return convertIntToString(entry.offset);

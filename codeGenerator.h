@@ -20,7 +20,7 @@ int generateAssignmentOperation(int firstOperandId, int secondOperandId);
 
 void generateExit();
 
-void generateProcedure(int procedureId, int argumentId);
+void generateProcedureCall(int procedureId, int argumentId);
 void generateLabel(int labelId);
 
 void printOutput();
@@ -37,3 +37,6 @@ void generatePreviousLabel();
 
 void addWhileLabel();
 string getWhileLabel();
+
+void generateProcedure(int procedureId);
+void generateSubProgramLeave();

@@ -16,6 +16,7 @@ struct SymbolTableEntry
 
 extern int offset;
 extern int localOffset;
+extern int referenceOffset;
 extern int currentScope;
 extern int labelCounter;
 extern int temporaryVariableCounter;
@@ -31,6 +32,7 @@ int getSymbolId(string name);
 void removeSymbol(int id);
 
 int calculateOffset(int type);
+int calculateReferenceOffset();
 
 void addUntypedToken(int token);
 void updateUntypedTokens(int type);
