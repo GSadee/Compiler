@@ -29,6 +29,9 @@ void printSymbols()
 			case PROCEDURE:
 				cout << "procedure " << entry.name << " ";
 				break;
+			case FUNCTION:
+				cout << "function " << entry.name << " ";
+				break;
 			case LABEL:
 				cout << "label " << entry.name << " ";
 				break;

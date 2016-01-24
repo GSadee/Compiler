@@ -12,6 +12,5 @@ begin
 end;
 
 begin
- p;
- x:=f
+ p
 end.

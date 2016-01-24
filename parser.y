@@ -9,8 +9,8 @@
     int yyerror(char const* s);
     void generateProcedureCallByExpressionList(int procedureId);
     void updateProcedureArguments(int type);
-
-    vector<int> temporaryArguments;
+    void updateFunctionReturnType(int functionId, int type);
+    void updateProcedureType(int procedureId);
 %}
 
 %error-verbose
@@ -62,7 +62,7 @@
         }
         declarations
         subprogram_declarations { generateLabel(createLabel()); }
-        compound_statement { enableUpdatingSymbolTable = true; }
+        compound_statement
         '.' { generateExit(); }
     	;
     identifier_program_list: 
@@ -91,20 +91,24 @@
         subprogram_declarations subprogram_declaration ';'
         |
         ; 
-    subprogram_declaration: 
+    subprogram_declaration:
         subprogram_head
         declarations compound_statement 
         {
             generateSubProgramLeave();
             changeScope(SCOPE_GLOBAL);
-            enableUpdatingSymbolTable = false;
+            enableUpdatingSymbolTable = true;
         }
         ;
     subprogram_head: 
-        FUNCTION ID { changeScope(SCOPE_LOCAL); }
-            arguments ':' standard_type ';'
-        | PROCEDURE ID { changeScope(SCOPE_LOCAL); }
-            arguments ';' { generateProcedure($2); }
+        FUNCTION ID { setLocalScope(FUNCTION); }
+            arguments ':' standard_type ';' 
+            { 
+                updateFunctionReturnType($2, $6);
+                generateSubProgramEnter($2);
+            }
+        | PROCEDURE ID { updateProcedureType($2); setLocalScope(FUNCTION); }
+            arguments ';' { generateSubProgramEnter($2); }
         ;
     arguments:
         '(' parameter_list ')' 
@@ -112,7 +116,7 @@
         ;
     parameter_list:
         identifier_list ':' type { updateProcedureArguments($3); }
-        | parameter_list ';' identifier_list ':' type
+        | parameter_list ';' identifier_list ':' type { updateProcedureArguments($5); }
         ;
     compound_statement:
         START optional_statements END
@@ -151,14 +155,15 @@
         | ID '[' expression ']'
         ;
     procedure_statement:
-        ID { $$ = $1; }
-        | ID '(' expression_list ')' { generateProcedureCallByExpressionList($1); }
+        ID { generateProcedureCall($1); }
+        | ID '(' expression_list ')' 
+        { generateProcedureCallByExpressionList($1); }
         ;
     expression_list:
         expression 
         {
             temporaryArguments.push_back($1);
-            $$ = $1; 
+            $$ = $1;
         }
         | expression_list ',' expression 
         { 
@@ -189,8 +194,8 @@
         | term AND factor { $$ = createExpression(AND, $1, $3); }
         ;
     factor:
-        variable { $$ = $1; }
-        | ID '(' expression_list ')' { $$ = $2; }
+        variable { $$ = $1; generateProcedureCall($1); }
+        | ID '(' expression_list ')' { $$ = $2; generateProcedureCall($1); }
         | INTEGER_VALUE { $$ = $1; }
         | REAL_VALUE { $$ = $1; }
         | '(' expression ')' { $$ = $2; }
@@ -215,9 +220,14 @@ int yyerror(char const* s)
 
 void generateProcedureCallByExpressionList(int procedureId)
 {
-    while (0 < temporaryArguments.size()) {
-        generateProcedureCall(procedureId, temporaryArguments.front());
-        temporaryArguments.erase(temporaryArguments.begin());
+    SymbolTableEntry procedure = getSymbol(procedureId);
+    if ("write" == procedure.name || "read" == procedure.name) {
+        while (0 < temporaryArguments.size()) {
+            generateProcedureReadWriteCall(procedureId, temporaryArguments.front());
+            temporaryArguments.erase(temporaryArguments.begin());
+        }
+    } else {
+        generateProcedureCall(procedureId);
     }
 }
 
@@ -231,4 +241,15 @@ void updateProcedureArguments(int type)
 
         untypedTokens.erase(untypedTokens.end() - 1);
     }
+}
+
+void updateFunctionReturnType(int functionId, int type)
+{
+    symbolTable.at(functionId).type = FUNCTION;
+    symbolTable.at(functionId).returnType = type;
+}
+
+void updateProcedureType(int procedureId)
+{
+    symbolTable.at(procedureId).type = PROCEDURE;
 }

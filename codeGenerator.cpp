@@ -25,7 +25,7 @@ void generateLabel(int labelId)
 
 void createJump(string label)
 {
-	output += "\tjump.i\t#" + label + "\n";
+	output += "\tjump.i\t\t#" + label + "\n";
 }
 
 int createExpression(int operationType, int firstOperandId, int secondOperandId)
@@ -131,7 +131,7 @@ void generateConditionalJump(string operation, int firstOperandId, int secondOpe
 	SymbolTableEntry label = getSymbol(labelId);
 
 	output += "\t"
-		+ operation + getSuffix(firstOperand.type) + "\t" 
+		+ operation + getSuffix(firstOperand.type) + "\t\t" 
 		+ getOffset(firstOperand) 
 		+ ", " 
 		+ getOffset(secondOperand)
@@ -150,7 +150,7 @@ int generateExpression(string operation, int firstOperandId, int secondOperandId
 	int temporaryId = createTemporaryVariableEntry(firstOperand.type);
 	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 
-	output += "\t" + operation + getSuffix(temporaryEntry.type) + "\t" 
+	output += "\t" + operation + getSuffix(temporaryEntry.type) + "\t\t" 
 		+ getOffset(firstOperand) 
 		+ ", " 
 		+ getOffset(secondOperand)
@@ -175,6 +175,28 @@ void typeConversion(int & firstOperandId, int & secondOperandId)
 	}
 }
 
+void typeConversionToFirstOperand(int & firstOperandId, int & secondOperandId)
+{
+	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
+	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
+
+	if ((INTEGER == firstOperand.type || INTEGER_VALUE == firstOperand.type)
+		&& (REAL == secondOperand.type || REAL_VALUE == secondOperand.type)) {
+		generateRealToInt(secondOperandId);
+	} else if ((REAL == firstOperand.type || REAL_VALUE == firstOperand.type)
+		&& (INTEGER == secondOperand.type || INTEGER_VALUE == secondOperand.type)) {
+		generateIntToReal(secondOperandId);
+	} else if (FUNCTION == secondOperand.type) {
+		if ((INTEGER == firstOperand.type || INTEGER_VALUE == firstOperand.type)
+			&& (REAL == secondOperand.returnType || REAL_VALUE == secondOperand.returnType)) {
+			generateRealToInt(secondOperandId);
+		} else if ((REAL == firstOperand.type || REAL_VALUE == firstOperand.type)
+			&& (INTEGER == secondOperand.returnType || INTEGER_VALUE == secondOperand.returnType)) {
+			generateIntToReal(secondOperandId);
+		}
+	}
+}
+
 void generateIntToReal(int & id)
 {
 	SymbolTableEntry entry = getSymbol(id);
@@ -182,6 +204,20 @@ void generateIntToReal(int & id)
 	int temporaryId = createTemporaryVariableEntry(REAL);
 	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 	output += "\tinttoreal.i\t" 
+		+ getOffset(entry) 
+		+ ", " 
+		+ getOffset(temporaryEntry) 
+		+ "\n";
+	id = temporaryId;
+}
+
+void generateRealToInt(int & id)
+{
+	SymbolTableEntry entry = getSymbol(id);
+
+	int temporaryId = createTemporaryVariableEntry(INTEGER);
+	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
+	output += "\trealtoint.r\t" 
 		+ getOffset(entry) 
 		+ ", " 
 		+ getOffset(temporaryEntry) 
@@ -204,12 +240,12 @@ string getSuffix(int type)
 
 int generateAssignmentOperation(int firstOperandId, int secondOperandId)
 {
-	typeConversion(firstOperandId, secondOperandId);
+	typeConversionToFirstOperand(firstOperandId, secondOperandId);
 
 	SymbolTableEntry firstOperand = getSymbol(firstOperandId);
 	SymbolTableEntry secondOperand = getSymbol(secondOperandId);
 
-	output += "\tmov" + getSuffix(firstOperand.type) + "\t" 
+	output += "\tmov" + getSuffix(firstOperand.type) + "\t\t" 
 		+ getOffset(secondOperand)
 		+ ", " 
 		+ getOffset(firstOperand)
@@ -223,13 +259,13 @@ void generateExit()
 	output += "\texit\n";
 }
 
-void generateProcedureCall(int procedureId, int argumentId)
+void generateProcedureReadWriteCall(int procedureId, int argumentId)
 {
 	SymbolTableEntry procedure = getSymbol(procedureId);
 	SymbolTableEntry argument = getSymbol(argumentId);
 
 	output += "\t" + procedure.name + getSuffix(argument.type)
-		+ "\t" + getOffset(argument) 
+		+ "\t\t" + getOffset(argument) 
 		+ "\n";
 }
 
@@ -263,11 +299,11 @@ void printOutput()
 	cout << endl << endl << output << endl;
 }
 
-void generateProcedure(int procedureId) 
+void generateSubProgramEnter(int subProgramId) 
 {
-	SymbolTableEntry procedure = getSymbol(procedureId);
+	SymbolTableEntry subProgram = getSymbol(subProgramId);
 
-	output += procedure.name + ":\n\tenter.i\t#?\n";
+	output += subProgram.name + ":\n\tenter.i\t\t#?\n";
 }
 
 void generateSubProgramLeave()
@@ -275,4 +311,43 @@ void generateSubProgramLeave()
 	output += "\tleave\n\treturn\n";
 
 	output.replace(output.find("?"), 1, convertIntToString(localOffset));
+}
+
+void generateProcedureCall(int procedureId)
+{
+	SymbolTableEntry procedure = getSymbol(procedureId);
+
+	if (FUNCTION != procedure.type && PROCEDURE != procedure.type) {
+		return;
+	}
+
+	int size = temporaryArguments.size();
+
+    while (0 < temporaryArguments.size()) {
+		SymbolTableEntry entry = getSymbol(temporaryArguments.front());
+		if (INTEGER_VALUE == entry.type || REAL_VALUE == entry.type) {
+			int temporaryId = createTemporaryVariableEntry(entry.type);
+			SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
+    		output += "\tmov" + getSuffix(temporaryEntry.type) 
+    			+ "\t\t#" + entry.name + ", " + getOffset(temporaryEntry) + "\n"
+    			+ "\tpush.i\t\t#" + convertIntToString(temporaryEntry.offset) + "\n";
+		} else {
+    		output += "\tpush.i\t\t#" + convertIntToString(entry.offset) + "\n";			
+		}
+
+        temporaryArguments.erase(temporaryArguments.begin());
+    }
+
+    if (FUNCTION == procedure.type) {
+    	int temporaryId = createTemporaryVariableEntry(procedure.returnType);
+		SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
+		symbolTable.at(procedureId).returnOffset = temporaryEntry.offset;
+    	output += "\tpush.i\t\t#" + convertIntToString(temporaryEntry.offset) + "\n";
+    	size++;
+    }
+
+	output += "\tcall.i\t\t#" + procedure.name + "\n";
+	if (0 < size) {
+		output += "\tincsp.i\t\t#" + convertIntToString(size * 4) + "\n";	
+	}
 }

@@ -6,8 +6,10 @@ int referenceOffset = 8;
 int currentScope = SCOPE_GLOBAL;
 int labelCounter = 0;
 int temporaryVariableCounter = 0;
+int currentSubProgram = -1;
 vector<SymbolTableEntry> symbolTable;
 vector<int> untypedTokens;
+vector<int> temporaryArguments;
 
 void initSymbolTable()
 {
@@ -23,6 +25,8 @@ int addSymbol(string name)
 	entry.reference = false;
 	entry.type = NONE;
 	entry.offset = -1;
+	entry.returnOffset = -1;
+	entry.returnType = -1;
 	symbolTable.push_back(entry);
 
 	return symbolTable.size() - 1;
@@ -47,8 +51,6 @@ SymbolTableEntry getSymbol(int id)
 	if (symbolTable.size() > id) {
 		return symbolTable.at(id);
 	}
-
-	cout << endl << "ERROR" << id << endl;
 
 	return symbolTable.at(0);
 }
@@ -145,6 +147,15 @@ void changeScope(int scope)
 	currentScope = scope;
 }
 
+void setLocalScope(int type)
+{
+	if (FUNCTION == type) {
+		referenceOffset += 4;
+	}
+
+	changeScope(SCOPE_LOCAL);
+}
+
 string getOffset(SymbolTableEntry entry)
 {
 	if (0 > entry.offset && (INTEGER_VALUE == entry.type || REAL_VALUE == entry.type)) {
@@ -153,6 +164,14 @@ string getOffset(SymbolTableEntry entry)
 
 	if (true == entry.reference) {
 		return "*BP+" + convertIntToString(entry.offset);
+	}
+
+	if (SCOPE_LOCAL == currentScope && FUNCTION == entry.type) {
+		return "*BP+8";
+	}
+
+	if (SCOPE_GLOBAL == currentScope && FUNCTION == entry.type) {
+		return convertIntToString(entry.returnOffset);
 	}
 
 	if (SCOPE_LOCAL == entry.scope) {
