@@ -14,6 +14,7 @@ struct SymbolTableEntry
 	int offset;
 	int returnOffset;
 	int returnType;
+	vector<int> arguments;
 };
 
 extern int offset;
@@ -23,6 +24,7 @@ extern int currentScope;
 extern int labelCounter;
 extern int temporaryVariableCounter;
 extern int currentSubProgram;
+extern int currentSubProgramType;
 extern vector<SymbolTableEntry> symbolTable;
 extern vector<int> untypedTokens;
 extern vector<int> temporaryArguments;

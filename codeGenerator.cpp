@@ -323,8 +323,8 @@ void generateProcedureCall(int procedureId)
 
 	int size = temporaryArguments.size();
 
-    while (0 < temporaryArguments.size()) {
-		SymbolTableEntry entry = getSymbol(temporaryArguments.front());
+	for (int i = 0; i < temporaryArguments.size(); i++) {
+		SymbolTableEntry entry = getSymbol(temporaryArguments.at(i));
 		if (INTEGER_VALUE == entry.type || REAL_VALUE == entry.type) {
 			int temporaryId = createTemporaryVariableEntry(entry.type);
 			SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
@@ -332,11 +332,13 @@ void generateProcedureCall(int procedureId)
     			+ "\t\t#" + entry.name + ", " + getOffset(temporaryEntry) + "\n"
     			+ "\tpush.i\t\t#" + convertIntToString(temporaryEntry.offset) + "\n";
 		} else {
+			int entryId = temporaryArguments.at(i);
+			typeConversionToFirstOperand(procedure.arguments.at(i), entryId);
+			entry = getSymbol(entryId);
     		output += "\tpush.i\t\t#" + convertIntToString(entry.offset) + "\n";			
 		}
-
-        temporaryArguments.erase(temporaryArguments.begin());
-    }
+	}
+	temporaryArguments.clear();
 
     if (FUNCTION == procedure.type) {
     	int temporaryId = createTemporaryVariableEntry(procedure.returnType);

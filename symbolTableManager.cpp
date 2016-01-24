@@ -7,6 +7,7 @@ int currentScope = SCOPE_GLOBAL;
 int labelCounter = 0;
 int temporaryVariableCounter = 0;
 int currentSubProgram = -1;
+int currentSubProgramType = -1;
 vector<SymbolTableEntry> symbolTable;
 vector<int> untypedTokens;
 vector<int> temporaryArguments;

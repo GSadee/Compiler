@@ -101,13 +101,13 @@
         }
         ;
     subprogram_head: 
-        FUNCTION ID { setLocalScope(FUNCTION); }
+        FUNCTION ID { currentSubProgram = $2; setLocalScope(FUNCTION); }
             arguments ':' standard_type ';' 
             { 
                 updateFunctionReturnType($2, $6);
                 generateSubProgramEnter($2);
             }
-        | PROCEDURE ID { updateProcedureType($2); setLocalScope(FUNCTION); }
+        | PROCEDURE ID { currentSubProgram = $2; updateProcedureType($2); setLocalScope(FUNCTION); }
             arguments ';' { generateSubProgramEnter($2); }
         ;
     arguments:
@@ -233,14 +233,19 @@ void generateProcedureCallByExpressionList(int procedureId)
 
 void updateProcedureArguments(int type)
 {
-    while (0 < untypedTokens.size()) {
-        int id = untypedTokens.back();
+    for (int i = 0; i < untypedTokens.size(); i++) {
+        int id = untypedTokens.at(i);
+cout<<endl<<"AAA: "<<currentSubProgram<<" - "<<id<<endl;
+        symbolTable.at(currentSubProgram).arguments.push_back(id);
+
         symbolTable.at(id).type = type;
         symbolTable.at(id).reference = true;
         symbolTable.at(id).offset = calculateReferenceOffset();
 
-        untypedTokens.erase(untypedTokens.end() - 1);
     }
+    untypedTokens.clear();
+
+cout<<endl<<"BBB: "<<symbolTable.at(currentSubProgram).arguments.size()<<endl;
 }
 
 void updateFunctionReturnType(int functionId, int type)
