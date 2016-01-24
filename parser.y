@@ -1,19 +1,10 @@
 %{
-	#include <iostream>
-	#include <vector>
     #include "global.h"
-    #include "codeGenerator.h"
 
     using namespace std;
     
     int yyerror(char const* s);
-    void generateProcedureCallByExpressionList(int procedureId);
-    void updateProcedureArguments(int type);
-    void updateFunctionReturnType(int functionId, int type);
-    void updateProcedureType(int procedureId);
 %}
-
-%error-verbose
 
 %token PROGRAM
 %token PROGRAM_ID
@@ -56,10 +47,7 @@
 
 %%
     program: 
-        PROGRAM ID '(' identifier_program_list ')' ';' 
-        { 
-            removeSymbol($2);
-        }
+        PROGRAM ID '(' identifier_program_list ')' ';' { removeSymbol($2); }
         declarations
         subprogram_declarations { generateLabel(createLabel()); }
         compound_statement
@@ -70,9 +58,7 @@
         | identifier_program_list ',' ID { removeSymbol($3); }
         ;
     declarations: 
-        declarations VAR identifier_list ':' type ';' {
-            updateUntypedTokens($5);
-        }
+        declarations VAR identifier_list ':' type ';' { updateUntypedTokens($5); }
         |
         ;
     identifier_list:
@@ -104,7 +90,7 @@
         FUNCTION ID { currentSubProgram = $2; setLocalScope(FUNCTION); }
             arguments ':' standard_type ';' 
             { 
-                updateFunctionReturnType($2, $6);
+                updateFunctionType($2, $6);
                 generateSubProgramEnter($2);
             }
         | PROCEDURE ID { currentSubProgram = $2; updateProcedureType($2); setLocalScope(FUNCTION); }
@@ -138,16 +124,16 @@
             {
                 int labelId = createLabel();
                 SymbolTableEntry label = getSymbol(labelId);
-                createJump(label.name);
-                generatePreviousLabel();
+                generateJump(label.name);
+                generateSecondPreviousLabel();
             }
-            ELSE statement { generateLastLabel(); }
+            ELSE statement { generatePreviousLabel(); }
         | WHILE { addWhileLabel(); }
             expression { generateConditionalValueJump("je", $3, 0); }
             DO statement 
             { 
-                createJump(getWhileLabel());
-                generateLastLabel(); 
+                generateJump(getWhileLabel());
+                generatePreviousLabel(); 
             }
         ;
     variable: 
@@ -155,7 +141,7 @@
         | ID '[' expression ']'
         ;
     procedure_statement:
-        ID { generateProcedureCall($1); }
+        ID { generateSubProgramCall($1); }
         | ID '(' expression_list ')' 
         { generateProcedureCallByExpressionList($1); }
         ;
@@ -194,15 +180,15 @@
         | term AND factor { $$ = createExpression(AND, $1, $3); }
         ;
     factor:
-        variable { $$ = $1; generateProcedureCall($1); }
-        | ID '(' expression_list ')' { $$ = $2; generateProcedureCall($1); }
+        variable { $$ = $1; generateSubProgramCall($1); }
+        | ID '(' expression_list ')' { $$ = $2; generateSubProgramCall($1); }
         | INTEGER_VALUE { $$ = $1; }
         | REAL_VALUE { $$ = $1; }
         | '(' expression ')' { $$ = $2; }
         | NOT factor 
         {
             int numberId = createNumberEntry(0, INTEGER_VALUE);
-            $$ = generateLogicalExpression("je", $2, numberId);
+            $$ = generateLogicalOperation("je", $2, numberId);
         }
         ;
     sign: 
@@ -216,45 +202,4 @@ int yyerror(char const* s)
     printf("%s at line %d\n", s, lineno);
 
     return 1;
-}
-
-void generateProcedureCallByExpressionList(int procedureId)
-{
-    SymbolTableEntry procedure = getSymbol(procedureId);
-    if ("write" == procedure.name || "read" == procedure.name) {
-        while (0 < temporaryArguments.size()) {
-            generateProcedureReadWriteCall(procedureId, temporaryArguments.front());
-            temporaryArguments.erase(temporaryArguments.begin());
-        }
-    } else {
-        generateProcedureCall(procedureId);
-    }
-}
-
-void updateProcedureArguments(int type)
-{
-    for (int i = 0; i < untypedTokens.size(); i++) {
-        int id = untypedTokens.at(i);
-cout<<endl<<"AAA: "<<currentSubProgram<<" - "<<id<<endl;
-        symbolTable.at(currentSubProgram).arguments.push_back(id);
-
-        symbolTable.at(id).type = type;
-        symbolTable.at(id).reference = true;
-        symbolTable.at(id).offset = calculateReferenceOffset();
-
-    }
-    untypedTokens.clear();
-
-cout<<endl<<"BBB: "<<symbolTable.at(currentSubProgram).arguments.size()<<endl;
-}
-
-void updateFunctionReturnType(int functionId, int type)
-{
-    symbolTable.at(functionId).type = FUNCTION;
-    symbolTable.at(functionId).returnType = type;
-}
-
-void updateProcedureType(int procedureId)
-{
-    symbolTable.at(procedureId).type = PROCEDURE;
 }

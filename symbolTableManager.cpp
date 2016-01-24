@@ -7,7 +7,6 @@ int currentScope = SCOPE_GLOBAL;
 int labelCounter = 0;
 int temporaryVariableCounter = 0;
 int currentSubProgram = -1;
-int currentSubProgramType = -1;
 vector<SymbolTableEntry> symbolTable;
 vector<int> untypedTokens;
 vector<int> temporaryArguments;
@@ -74,41 +73,6 @@ void removeSymbol(int id)
 	}
 }
 
-int calculateOffset(int type)
-{
-	int returnOffset = -1;
-	int variableOffset = -1;
-
-	switch (type) {
-		case INTEGER:
-			variableOffset = 4;
-			break;
-		case REAL:
-			variableOffset = 8;
-			break;
-		default:
-			return -1;
-	}
-
-	if (SCOPE_GLOBAL == currentScope) {
-		returnOffset = offset;
-		offset += variableOffset;
-	} else if (SCOPE_LOCAL == currentScope) {
-		localOffset += variableOffset;
-		returnOffset = localOffset;
-	}
-
-	return returnOffset;
-}
-
-int calculateReferenceOffset()
-{
-	int returnOffset = referenceOffset;
-	referenceOffset += 4;
-
-	return returnOffset;
-}
-
 void addUntypedToken(int token) 
 {
 	untypedTokens.push_back(token);
@@ -120,22 +84,6 @@ void updateUntypedTokens(int type)
 		updateSymbolWithType(untypedTokens.front(), type);
 		untypedTokens.erase(untypedTokens.begin());
 	}
-}
-
-string convertIntToString(int number)
-{
-	string result;
-	sprintf((char*) result.c_str(), "%d", number);
-	
-	return result.c_str();
-}
-
-string convertRealToString(double number)
-{
-	string result;
-	sprintf((char*) result.c_str(), "%.2f", number);
-	
-	return result.c_str();
 }
 
 void changeScope(int scope)
@@ -164,7 +112,7 @@ string getOffset(SymbolTableEntry entry)
 	}
 
 	if (true == entry.reference) {
-		return "*BP+" + convertIntToString(entry.offset);
+		return "*BP+" + convertIntegerToString(entry.offset);
 	}
 
 	if (SCOPE_LOCAL == currentScope && FUNCTION == entry.type) {
@@ -172,12 +120,12 @@ string getOffset(SymbolTableEntry entry)
 	}
 
 	if (SCOPE_GLOBAL == currentScope && FUNCTION == entry.type) {
-		return convertIntToString(entry.returnOffset);
+		return convertIntegerToString(entry.returnOffset);
 	}
 
 	if (SCOPE_LOCAL == entry.scope) {
-		return "BP-" + convertIntToString(entry.offset);
+		return "BP-" + convertIntegerToString(entry.offset);
 	}
 
-	return convertIntToString(entry.offset);
+	return convertIntegerToString(entry.offset);
 }

@@ -1,46 +1,40 @@
 void initCodeGenerator();
+void printOutput();
 
-int createLabel();
-void createJump(string label);
 int createExpression(int operationType, int firstOperandId, int secondOperandId);
 
 int generateExpression(string operation, int firstOperandId, int secondOperandId);
-int generateLogicalExpression(string operation, int firstOperandId, int secondOperandId);
+int generateLogicalOperation(string operation, int firstOperandId, int secondOperandId);
+int generateAssignmentOperation(int firstOperandId, int secondOperandId);
 
+int createLabel();
+void generateLabel(int labelId);
+void generatePreviousLabel();
+void generateSecondPreviousLabel();
+
+void generateJump(string label);
 void generateConditionalJump(string operation, int firstOperandId, int secondOperandId, int labelId);
 void generateConditionalValueJump(string operation, int operandId, int number);
 
-void typeConversion(int & firstOperandId, int & secondOperandId);
-void typeConversionToFirstOperand(int & firstOperandId, int & secondOperandId);
+void generateExit();
+
+void generateSubProgramEnter(int subProgramId);
+void generateSubProgramLeave();
+void generateSubProgramCall(int procedureId);
+void generateProcedureCallByExpressionList(int procedureId);
+void generateProcedureReadWriteCall(int procedureId, int argumentId);
 
 void generateIntToReal(int & id);
 void generateRealToInt(int & id);
 
-string getSuffix(int type);
-
-int generateAssignmentOperation(int firstOperandId, int secondOperandId);
-
-void generateExit();
-
-void generateProcedureReadWriteCall(int procedureId, int argumentId);
-void generateProcedureCall(int procedureId);
-void generateFunctionCall(int functionId);
-void generateLabel(int labelId);
-
-void printOutput();
-
 int createTemporaryVariableEntry(int type);
-
 int createNumberEntry(int number, int type);
-int createIntegerNumberEntry(int number);
-int createRealNumberEntry(double number);
 
-string getOffset(SymbolTableEntry entry);
-void generateLastLabel();
-void generatePreviousLabel();
+void updateFunctionType(int functionId, int type);
+void updateProcedureType(int procedureId);
+void updateProcedureArguments(int type);
 
 void addWhileLabel();
 string getWhileLabel();
 
-void generateSubProgramEnter(int subProgramId);
-void generateSubProgramLeave();
+string getSuffix(int type);

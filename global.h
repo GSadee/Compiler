@@ -6,6 +6,8 @@
 #include <vector>
 #include "parser.h"
 #include "symbolTableManager.h"
+#include "codeGenerator.h"
+#include "converter.h"
 
 using namespace std;
 

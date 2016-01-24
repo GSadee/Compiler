@@ -1,6 +1,5 @@
 #include "global.h"
-#include "printer.h"
-#include "codeGenerator.h"
+#include "symbolTablePrinter.h"
 
 using namespace std;
 

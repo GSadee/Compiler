@@ -1,4 +1,5 @@
 #include <vector>
+#include "offsetCalculator.h"
 
 using namespace std;
 
@@ -7,13 +8,14 @@ using namespace std;
 
 struct SymbolTableEntry
 {
-	int scope;
-	int type;
-	bool reference;
 	string name;
+	int type;
+	int scope;
 	int offset;
-	int returnOffset;
+	bool reference;
+	
 	int returnType;
+	int returnOffset;
 	vector<int> arguments;
 };
 
@@ -24,12 +26,12 @@ extern int currentScope;
 extern int labelCounter;
 extern int temporaryVariableCounter;
 extern int currentSubProgram;
-extern int currentSubProgramType;
 extern vector<SymbolTableEntry> symbolTable;
 extern vector<int> untypedTokens;
 extern vector<int> temporaryArguments;
 
 void initSymbolTable();
+
 int addSymbol(string name);
 int addSymbolWithType(string name, int type);
 void updateSymbolWithType(int id, int type);
@@ -37,13 +39,10 @@ SymbolTableEntry getSymbol(int id);
 int getSymbolId(string name);
 void removeSymbol(int id);
 
-int calculateOffset(int type);
-int calculateReferenceOffset();
-
 void addUntypedToken(int token);
 void updateUntypedTokens(int type);
 
-string convertIntToString(int number);
-string convertRealToString(double number);
 void changeScope(int scope);
 void setLocalScope(int type);
+
+string getOffset(SymbolTableEntry entry);
