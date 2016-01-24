@@ -5,7 +5,6 @@
 	#include "global.h"
 
 	int lineno = 0;
-
 	bool enableUpdatingSymbolTable = true;
 %}
 
@@ -37,10 +36,7 @@ id 			{letter}({letter}|{digit})*
 					enableUpdatingSymbolTable = false; 
 					return START; 
 				}
-"end"			{ 
-					enableUpdatingSymbolTable = true; 
-					return END; 
-				}
+"end"			{ return END; }
 ":="			{ return ASSIGNMENT_OPERATOR; }
 "array"			{ return ARRAY; }
 ".."			{ return DOTS; }

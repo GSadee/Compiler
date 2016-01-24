@@ -33,12 +33,17 @@ int createExpression(int operationType, int firstOperandId, int secondOperandId)
 	switch (operationType) {
 		case PLUS:
 			return generateExpression("add", firstOperandId, secondOperandId);
+		case MINUS:
+			return generateExpression("sub", firstOperandId, secondOperandId);
 		case MULTIPLICATION:
 			return generateExpression("mul", firstOperandId, secondOperandId);
+		case DIVISION:
+			return generateExpression("div", firstOperandId, secondOperandId);
+		case MODULO:
+			return generateExpression("mod", firstOperandId, secondOperandId);
 		case AND:
 			return generateExpression("and", firstOperandId, secondOperandId);
 		case OR:
-			cout << endl << "OR: " << firstOperandId << " " << secondOperandId << endl;
 			return generateExpression("or", firstOperandId, secondOperandId);
 		case ASSIGNMENT_OPERATOR:
 			return generateAssignmentOperation(firstOperandId, secondOperandId);
@@ -93,6 +98,12 @@ int generateLogicalExpression(string operation, int firstOperandId, int secondOp
 
 int createTemporaryVariableEntry(int type)
 {
+	if (INTEGER_VALUE == type) {
+		type = INTEGER;
+	} else if (REAL_VALUE == type) {
+		type = REAL;
+	}
+
 	string name = "$t" + convertIntToString(temporaryVariableCounter++);
 	
 	return addSymbolWithType(name, type);
@@ -107,7 +118,6 @@ int createNumberEntry(int number, int type)
 
 void generateConditionalValueJump(string operation, int operandId, int number)
 {
-	cout << operandId << endl;
 	int labelId = createLabel();
 	int numberId = createNumberEntry(number, INTEGER_VALUE);
 

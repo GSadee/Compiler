@@ -94,8 +94,7 @@ void addUntypedToken(int token)
 
 void updateUntypedTokens(int type)
 {
-	while (0 < untypedTokens.size())
-	{
+	while (0 < untypedTokens.size()) {
 		updateSymbolWithType(untypedTokens.front(), type);
 		untypedTokens.erase(untypedTokens.begin());
 	}

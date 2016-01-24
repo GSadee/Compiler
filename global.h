@@ -10,6 +10,7 @@
 using namespace std;
 
 extern int lineno;
+extern bool enableUpdatingSymbolTable;
 
 int yylex ();
 int yyparse();
