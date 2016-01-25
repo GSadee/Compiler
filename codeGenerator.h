@@ -24,6 +24,8 @@ void generateSubProgramCall(int procedureId);
 void generateProcedureCallByExpressionList(int procedureId);
 void generateProcedureReadWriteCall(int procedureId, int argumentId);
 
+int generateArrayElement(int arrayId, int argumentId);
+
 void generateIntToReal(int & id);
 void generateRealToInt(int & id);
 

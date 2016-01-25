@@ -30,10 +30,23 @@ void printSymbols()
 				cout << "procedure " << entry.name << " ";
 				break;
 			case FUNCTION:
-				cout << "function " << entry.name << " ";
+				cout << "function " << entry.name;
+				if (INTEGER == entry.returnType) {
+					cout << " integer ";
+				} else if (REAL == entry.returnType) {
+					cout << " real ";
+				}
 				break;
 			case LABEL:
 				cout << "label " << entry.name << " ";
+				break;
+			case ARRAY:
+				cout << "array " << entry.name << " [" << entry.startIndex << ".." << entry.endIndex << "] of ";
+				if (INTEGER == entry.returnType) {
+					cout << "integer ";
+				} else if (REAL == entry.returnType) {
+					cout << "real ";
+				}
 				break;
 			default:
 				cout << entry.name << " ";

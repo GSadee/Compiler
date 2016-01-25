@@ -17,6 +17,9 @@ struct SymbolTableEntry
 	int returnType;
 	int returnOffset;
 	vector<int> arguments;
+	int startIndex;
+	bool pointer;
+	int endIndex;
 };
 
 extern int offset;
@@ -41,8 +44,10 @@ void removeSymbol(int id);
 
 void addUntypedToken(int token);
 void updateUntypedTokens(int type);
+void updateArray(int arrayId, int startIndex, int endIndex, int type);
 
 void changeScope(int scope);
 void setLocalScope(int type);
 
 string getOffset(SymbolTableEntry entry);
+string getFromOffset(SymbolTableEntry entry);

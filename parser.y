@@ -67,7 +67,11 @@
         ;
     type: 
         standard_type { $$ = $1; }
-        | ARRAY '[' INTEGER_VALUE DOTS INTEGER_VALUE ']' OF standard_type
+        | ARRAY '[' INTEGER_VALUE DOTS INTEGER_VALUE ']' OF standard_type 
+        {
+            updateArray($$, $3, $5, $8);
+            $$ = ARRAY;
+        }
         ;
     standard_type: 
         INTEGER { $$ = INTEGER; }
@@ -138,7 +142,7 @@
         ;
     variable: 
         ID { $$ = $1; }
-        | ID '[' expression ']'
+        | ID '[' expression ']' { $$ = generateArrayElement($1, $3); }
         ;
     procedure_statement:
         ID { generateSubProgramCall($1); }

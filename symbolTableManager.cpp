@@ -27,6 +27,9 @@ int addSymbol(string name)
 	entry.offset = -1;
 	entry.returnOffset = -1;
 	entry.returnType = -1;
+	entry.startIndex = -1;
+	entry.endIndex = -1;
+	entry.pointer = false;
 	symbolTable.push_back(entry);
 
 	return symbolTable.size() - 1;
@@ -43,7 +46,7 @@ int addSymbolWithType(string name, int type)
 void updateSymbolWithType(int id, int type)
 {
 	symbolTable.at(id).type = type;
-	symbolTable.at(id).offset = calculateOffset(type);
+	symbolTable.at(id).offset = calculateOffset(id);
 }
 
 SymbolTableEntry getSymbol(int id)
@@ -86,6 +89,13 @@ void updateUntypedTokens(int type)
 	}
 }
 
+void updateArray(int arrayId, int startIndex, int endIndex, int type)
+{
+	symbolTable.at(arrayId).startIndex = atoi(getSymbol(startIndex).name.c_str());
+	symbolTable.at(arrayId).endIndex = atoi(getSymbol(endIndex).name.c_str());
+	symbolTable.at(arrayId).returnType = type;
+}
+
 void changeScope(int scope)
 {
 	if (SCOPE_LOCAL == currentScope && SCOPE_GLOBAL == scope) {
@@ -111,6 +121,14 @@ string getOffset(SymbolTableEntry entry)
 		return "#" + entry.name;
 	}
 
+	if (SCOPE_LOCAL == currentScope && true == entry.pointer) {
+		return "*BP-" + convertIntegerToString(entry.offset);
+	}
+
+	if (SCOPE_GLOBAL == currentScope && true == entry.pointer) {
+		return "*" + convertIntegerToString(entry.offset);
+	}
+
 	if (true == entry.reference) {
 		return "*BP+" + convertIntegerToString(entry.offset);
 	}
@@ -128,4 +146,13 @@ string getOffset(SymbolTableEntry entry)
 	}
 
 	return convertIntegerToString(entry.offset);
+}
+
+string getFromOffset(SymbolTableEntry entry)
+{
+	if (true == entry.reference) {
+		return "BP+" + convertIntegerToString(entry.offset);	
+	}
+
+	return "#" + convertIntegerToString(entry.offset);
 }

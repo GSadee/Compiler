@@ -205,12 +205,12 @@ void generateSubProgramCall(int procedureId)
 			SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
     		output += "\tmov" + getSuffix(temporaryEntry.type) 
     			+ "\t\t#" + entry.name + ", " + getOffset(temporaryEntry) + "\n"
-    			+ "\tpush.i\t\t#" + convertIntegerToString(temporaryEntry.offset) + "\n";
+    			+ "\tpush.i\t\t" + getFromOffset(temporaryEntry) + "\n";
 		} else {
 			int entryId = temporaryArguments.at(i);
 			typeConversionToFirstOperand(procedure.arguments.at(i), entryId);
 			entry = getSymbol(entryId);
-    		output += "\tpush.i\t\t#" + convertIntegerToString(entry.offset) + "\n";			
+    		output += "\tpush.i\t\t" + getFromOffset(entry) + "\n";			
 		}
 	}
 	temporaryArguments.clear();
@@ -219,7 +219,7 @@ void generateSubProgramCall(int procedureId)
     	int temporaryId = createTemporaryVariableEntry(procedure.returnType);
 		SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
 		symbolTable.at(procedureId).returnOffset = temporaryEntry.offset;
-    	output += "\tpush.i\t\t#" + convertIntegerToString(temporaryEntry.offset) + "\n";
+    	output += "\tpush.i\t\t" + getFromOffset(temporaryEntry) + "\n";
     	size++;
     }
 
@@ -251,6 +251,43 @@ void generateProcedureReadWriteCall(int procedureId, int argumentId)
 	output += "\t" + procedure.name + getSuffix(argument.type)
 		+ "\t\t" + getOffset(argument) 
 		+ "\n";
+}
+
+int generateArrayElement(int arrayId, int argumentId)
+{
+	cout << endl << "arrayId: " << arrayId << endl;
+	cout << endl << "argumentId: " << argumentId << endl;
+
+	SymbolTableEntry array = getSymbol(arrayId);
+	SymbolTableEntry argument = getSymbol(argumentId);
+
+	if (REAL_VALUE == argument.type || REAL == argument.type) {
+		generateRealToInt(argumentId);
+	}
+
+	argument = getSymbol(argumentId);
+
+	int temporaryId = createTemporaryVariableEntry(INTEGER);
+	SymbolTableEntry temporaryEntry = getSymbol(temporaryId);
+
+	int temporaryId2 = createTemporaryVariableEntry(INTEGER);
+	SymbolTableEntry temporaryEntry2 = getSymbol(temporaryId2);
+
+	output += "\tsub.i\t\t" + getOffset(argument) 
+		+ ", #1, " + getOffset(temporaryEntry) 
+		+ "\n"
+		+ "\tmul.i\t\t" + getOffset(temporaryEntry) 
+		+ ", #" + convertIntegerToString(getVariableOffset(array.returnType)) 
+		+ ", " + getOffset(temporaryEntry) 
+		+ "\n"
+		+ "\tadd.i\t\t" + getFromOffset(array)
+		+ ", " + getOffset(temporaryEntry)
+		+ ", " + getOffset(temporaryEntry2)
+		+ "\n";
+
+	symbolTable.at(temporaryId2).pointer = true;
+
+	return temporaryId2;
 }
 
 void generateIntToReal(int & id)
