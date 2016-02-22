@@ -42,7 +42,13 @@ void updateSymbolWithType(int id, int type)
 
 SymbolTableEntry getSymbol(int id)
 {
-	return symbolTable.at(id);
+	if (symbolTable.size() > id) {
+		return symbolTable.at(id);
+	}
+
+	cout << endl << "ERROR" << id << endl;
+
+	return symbolTable.at(0);
 }
 
 int getSymbolId(string name)
@@ -103,6 +109,14 @@ string convertIntToString(int number)
 	return result.c_str();
 }
 
+string convertRealToString(double number)
+{
+	string result;
+	sprintf((char*) result.c_str(), "%.2f", number);
+	
+	return result.c_str();
+}
+
 void changeScope(int scope)
 {
 	if (SCOPE_LOCAL == currentScope && SCOPE_GLOBAL == scope) {
@@ -110,4 +124,13 @@ void changeScope(int scope)
 	}
 
 	currentScope = scope;
+}
+
+string getOffset(SymbolTableEntry entry)
+{
+	if (0 > entry.offset && (INTEGER_VALUE == entry.type || REAL_VALUE == entry.type)) {
+		return "#" + entry.name;
+	}
+
+	return convertIntToString(entry.offset);
 }

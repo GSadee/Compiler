@@ -55,7 +55,7 @@
         PROGRAM ID '(' identifier_program_list ')' ';' 
         { 
             removeSymbol($2);
-            createLabel();
+            generateLabel(createLabel());
         }
         declarations
         subprogram_declarations
@@ -119,7 +119,18 @@
         variable ASSIGNMENT_OPERATOR expression { $$ = createExpression(ASSIGNMENT_OPERATOR, $1, $3); }
         | procedure_statement
         | compound_statement
-        | IF expression THEN statement ELSE statement
+        | IF expression { generateConditionalValueJump("je", $2, 0); }
+            THEN statement
+            {
+                int labelId = createLabel();
+                SymbolTableEntry label = getSymbol(labelId);
+                createJump(label.name);
+                generatePreviousLabel();
+            }
+            ELSE statement 
+            {
+                generateLastLabel();
+            }
         | WHILE expression DO statement
         ;
     variable: 
@@ -136,18 +147,18 @@
         ;
     expression:
         simple_expression { $$ = $1; }
-        | simple_expression EQUAL simple_expression
-        | simple_expression NOT_EQUAL simple_expression
-        | simple_expression GREATER simple_expression
-        | simple_expression LOWER simple_expression
-        | simple_expression GREATER_EQUAL simple_expression
-        | simple_expression LOWER_EQUAL simple_expression
+        | simple_expression EQUAL simple_expression { $$ = createExpression(EQUAL, $1, $3); }
+        | simple_expression NOT_EQUAL simple_expression { $$ = createExpression(NOT_EQUAL, $1, $3); }
+        | simple_expression GREATER simple_expression { $$ = createExpression(GREATER, $1, $3); }
+        | simple_expression LOWER simple_expression { $$ = createExpression(LOWER, $1, $3); }
+        | simple_expression GREATER_EQUAL simple_expression { $$ = createExpression(GREATER_EQUAL, $1, $3); }
+        | simple_expression LOWER_EQUAL simple_expression { $$ = createExpression(LOWER_EQUAL, $1, $3); }
         ;
     simple_expression:
         term { $$ = $1; }
         | sign term
         | simple_expression sign term { $$ = createExpression($2, $1, $3); }
-        | simple_expression OR term
+        | simple_expression OR term { $$ = createExpression(OR, $1, $3); }
         ;
     term:
         factor { $$ = $1; }
@@ -160,7 +171,15 @@
         variable { $$ = $1; }
         | ID '(' expression_list ')' { $$ = $2; }
         | INTEGER_VALUE
+        {
+            int id = addSymbolWithType(convertIntToString($1), INTEGER_VALUE);
+            $$ = id;
+        }
         | REAL_VALUE
+        {
+            int id = addSymbolWithType(convertRealToString($1), REAL_VALUE);
+            $$ = id;
+        }
         | '(' expression ')' { $$ = $2; }
         | NOT factor { $$ = $2; }
         ;
