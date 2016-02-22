@@ -7,7 +7,8 @@
     using namespace std;
     
     int yyerror(char const* s);
-    void generateProcedureByExpressionList(int procedureId);
+    void generateProcedureCallByExpressionList(int procedureId);
+    void updateProcedureArguments(int type);
 
     vector<int> temporaryArguments;
 %}
@@ -58,10 +59,9 @@
         PROGRAM ID '(' identifier_program_list ')' ';' 
         { 
             removeSymbol($2);
-            generateLabel(createLabel());
         }
         declarations
-        subprogram_declarations
+        subprogram_declarations { generateLabel(createLabel()); }
         compound_statement { enableUpdatingSymbolTable = true; }
         '.' { generateExit(); }
     	;
@@ -92,23 +92,26 @@
         |
         ; 
     subprogram_declaration: 
-        subprogram_head { changeScope(SCOPE_LOCAL); }
+        subprogram_head
         declarations compound_statement 
-        { 
+        {
+            generateSubProgramLeave();
             changeScope(SCOPE_GLOBAL);
             enableUpdatingSymbolTable = false;
         }
         ;
     subprogram_head: 
-        FUNCTION ID arguments ':' standard_type ';'
-        | PROCEDURE ID arguments ';'
+        FUNCTION ID { changeScope(SCOPE_LOCAL); }
+            arguments ':' standard_type ';'
+        | PROCEDURE ID { changeScope(SCOPE_LOCAL); }
+            arguments ';' { generateProcedure($2); }
         ;
     arguments:
         '(' parameter_list ')' 
         | 
         ;
     parameter_list:
-        identifier_list ':' type
+        identifier_list ':' type { updateProcedureArguments($3); }
         | parameter_list ';' identifier_list ':' type
         ;
     compound_statement:
@@ -149,7 +152,7 @@
         ;
     procedure_statement:
         ID { $$ = $1; }
-        | ID '(' expression_list ')' { generateProcedureByExpressionList($1); }
+        | ID '(' expression_list ')' { generateProcedureCallByExpressionList($1); }
         ;
     expression_list:
         expression 
@@ -210,10 +213,22 @@ int yyerror(char const* s)
     return 1;
 }
 
-void generateProcedureByExpressionList(int procedureId)
+void generateProcedureCallByExpressionList(int procedureId)
 {
     while (0 < temporaryArguments.size()) {
-        generateProcedure(procedureId, temporaryArguments.front());
+        generateProcedureCall(procedureId, temporaryArguments.front());
         temporaryArguments.erase(temporaryArguments.begin());
+    }
+}
+
+void updateProcedureArguments(int type)
+{
+    while (0 < untypedTokens.size()) {
+        int id = untypedTokens.back();
+        symbolTable.at(id).type = type;
+        symbolTable.at(id).reference = true;
+        symbolTable.at(id).offset = calculateReferenceOffset();
+
+        untypedTokens.erase(untypedTokens.end() - 1);
     }
 }
