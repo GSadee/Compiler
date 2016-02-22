@@ -21,12 +21,12 @@ id 			{letter}({letter}|{digit})*
 %%
 {whitespaces}
 {newline}		{ ++lineno; }
-{integer}		{ 
-					yylval = atoi(yytext);
+{integer}		{
+					yylval = addSymbolWithType(yytext, INTEGER_VALUE);
 					return INTEGER_VALUE;
 				}
-{real}			{ 
-					yylval = atol(yytext);
+{real}			{
+					yylval = addSymbolWithType(yytext, REAL_VALUE);
 					return REAL_VALUE;
 				}
 "program"		{ return PROGRAM; }
