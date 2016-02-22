@@ -12,6 +12,9 @@ struct SymbolTableEntry
 	bool reference;
 	string name;
 	int offset;
+	int returnOffset;
+	int returnType;
+	vector<int> arguments;
 };
 
 extern int offset;
@@ -20,8 +23,11 @@ extern int referenceOffset;
 extern int currentScope;
 extern int labelCounter;
 extern int temporaryVariableCounter;
+extern int currentSubProgram;
+extern int currentSubProgramType;
 extern vector<SymbolTableEntry> symbolTable;
 extern vector<int> untypedTokens;
+extern vector<int> temporaryArguments;
 
 void initSymbolTable();
 int addSymbol(string name);
@@ -40,3 +46,4 @@ void updateUntypedTokens(int type);
 string convertIntToString(int number);
 string convertRealToString(double number);
 void changeScope(int scope);
+void setLocalScope(int type);

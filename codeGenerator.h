@@ -11,8 +11,10 @@ void generateConditionalJump(string operation, int firstOperandId, int secondOpe
 void generateConditionalValueJump(string operation, int operandId, int number);
 
 void typeConversion(int & firstOperandId, int & secondOperandId);
+void typeConversionToFirstOperand(int & firstOperandId, int & secondOperandId);
 
 void generateIntToReal(int & id);
+void generateRealToInt(int & id);
 
 string getSuffix(int type);
 
@@ -20,7 +22,9 @@ int generateAssignmentOperation(int firstOperandId, int secondOperandId);
 
 void generateExit();
 
-void generateProcedureCall(int procedureId, int argumentId);
+void generateProcedureReadWriteCall(int procedureId, int argumentId);
+void generateProcedureCall(int procedureId);
+void generateFunctionCall(int functionId);
 void generateLabel(int labelId);
 
 void printOutput();
@@ -38,5 +42,5 @@ void generatePreviousLabel();
 void addWhileLabel();
 string getWhileLabel();
 
-void generateProcedure(int procedureId);
+void generateSubProgramEnter(int subProgramId);
 void generateSubProgramLeave();
