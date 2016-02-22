@@ -7,6 +7,9 @@
     using namespace std;
     
     int yyerror(char const* s);
+    void generateProcedureByExpressionList(int procedureId);
+
+    vector<int> temporaryArguments;
 %}
 
 %error-verbose
@@ -59,7 +62,7 @@
         }
         declarations
         subprogram_declarations
-        compound_statement
+        compound_statement { enableUpdatingSymbolTable = true; }
         '.' { generateExit(); }
     	;
     identifier_program_list: 
@@ -90,7 +93,11 @@
         ; 
     subprogram_declaration: 
         subprogram_head { changeScope(SCOPE_LOCAL); }
-        declarations compound_statement { changeScope(SCOPE_GLOBAL); }
+        declarations compound_statement 
+        { 
+            changeScope(SCOPE_GLOBAL);
+            enableUpdatingSymbolTable = false;
+        }
         ;
     subprogram_head: 
         FUNCTION ID arguments ':' standard_type ';'
@@ -142,11 +149,19 @@
         ;
     procedure_statement:
         ID { $$ = $1; }
-        | ID '(' expression_list ')' { generateProcedure($1, $3); }
+        | ID '(' expression_list ')' { generateProcedureByExpressionList($1); }
         ;
     expression_list:
-        expression { $$ = $1; }
-        | expression_list ',' expression
+        expression 
+        {
+            temporaryArguments.push_back($1);
+            $$ = $1; 
+        }
+        | expression_list ',' expression 
+        { 
+            temporaryArguments.push_back($3);
+            $$ = $3; 
+        }
         ;
     expression:
         simple_expression { $$ = $1; }
@@ -193,4 +208,12 @@ int yyerror(char const* s)
     printf("%s at line %d\n", s, lineno);
 
     return 1;
+}
+
+void generateProcedureByExpressionList(int procedureId)
+{
+    while (0 < temporaryArguments.size()) {
+        generateProcedure(procedureId, temporaryArguments.front());
+        temporaryArguments.erase(temporaryArguments.begin());
+    }
 }
