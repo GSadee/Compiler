@@ -9,5 +9,7 @@
 
 using namespace std;
 
+extern int lineno;
+
 int yylex ();
 int yyparse();
