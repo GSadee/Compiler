@@ -2,6 +2,7 @@
 	#include <iostream>
 	#include <vector>
     #include "global.h"
+    #include "codeGenerator.h"
 
     using namespace std;
     
@@ -53,13 +54,13 @@
     program: 
         PROGRAM ID '(' identifier_program_list ')' ';' 
         { 
-            removeSymbol($2); 
-            addSymbolWithType("lab" + convertIntToString(labelCounter++), LABEL); 
+            removeSymbol($2);
+            createLabel();
         }
         declarations
         subprogram_declarations
         compound_statement
-        '.'
+        '.' { generateExit(); }
     	;
     identifier_program_list: 
         ID { removeSymbol($1); }
@@ -88,7 +89,8 @@
         |
         ; 
     subprogram_declaration: 
-        subprogram_head declarations compound_statement 
+        subprogram_head { changeScope(SCOPE_LOCAL); }
+        declarations compound_statement { changeScope(SCOPE_GLOBAL); }
         ;
     subprogram_head: 
         FUNCTION ID arguments ':' standard_type ';'
@@ -114,26 +116,26 @@
         | statement_list ';' statement
         ;
     statement: 
-        variable ASSIGNMENT_OPERATOR expression
+        variable ASSIGNMENT_OPERATOR expression { $$ = createExpression(ASSIGNMENT_OPERATOR, $1, $3); }
         | procedure_statement
         | compound_statement
         | IF expression THEN statement ELSE statement
         | WHILE expression DO statement
         ;
     variable: 
-        ID 
-        | ID '[' expression ']' 
+        ID { $$ = $1; }
+        | ID '[' expression ']'
         ;
     procedure_statement:
-        ID
-        | ID '(' expression_list ')'
+        ID { $$ = $1; }
+        | ID '(' expression_list ')' { generateProcedure($1, $3) }
         ;
     expression_list:
-        expression 
+        expression { $$ = $1; }
         | expression_list ',' expression
         ;
     expression:
-        simple_expression 
+        simple_expression { $$ = $1; }
         | simple_expression EQUAL simple_expression
         | simple_expression NOT_EQUAL simple_expression
         | simple_expression GREATER simple_expression
@@ -142,29 +144,29 @@
         | simple_expression LOWER_EQUAL simple_expression
         ;
     simple_expression:
-        term
+        term { $$ = $1; }
         | sign term
-        | simple_expression sign term
+        | simple_expression sign term { $$ = createExpression($2, $1, $3); }
         | simple_expression OR term
         ;
     term:
-        factor 
+        factor { $$ = $1; }
         | term MULTIPLICATION factor
         | term DIVISION factor
         | term MODULO factor
         | term AND factor
         ;
     factor:
-        variable
-        | ID '(' expression_list ')'
+        variable { $$ = $1; }
+        | ID '(' expression_list ')' { $$ = $2; }
         | INTEGER_VALUE
         | REAL_VALUE
-        | '(' expression ')'
-        | NOT factor
+        | '(' expression ')' { $$ = $2; }
+        | NOT factor { $$ = $2; }
         ;
     sign: 
-        PLUS { $$ = $1; }
-        | MINUS
+        PLUS { $$ = PLUS; }
+        | MINUS { $$ = MINUS; }
         ;
 %%
 

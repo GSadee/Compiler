@@ -2,11 +2,11 @@
 
 void printSymbols()
 {
-	cout << "; " << "Symbol table dump" << endl;
-	for (int iterator = 0; iterator < symbolTable.size(); iterator++) {
-		SymbolTableEntry entry = symbolTable[iterator];
+	cout << endl << "; " << "Symbol table dump" << endl;
+	for (int i = 0; i < symbolTable.size(); i++) {
+		SymbolTableEntry entry = symbolTable.at(i);
 		
-		cout << "; " << iterator << " ";
+		cout << "; " << i << " ";
 		if (SCOPE_GLOBAL == entry.scope) {
 			cout << "Global ";
 		} else {
